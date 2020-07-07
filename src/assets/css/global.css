@@ -347,3 +347,15 @@
   [hidden] {
     display: none;
   }
+  
+  /* element-ui 面包屑导航样式 */
+  
+  .el-breadcrumb {
+	  margin-bottom: 20px;
+  }
+  
+  /* element-ui卡片样式 */
+  
+  .el-card {
+	  box-shadow: 0 1 1px rgba(0,0,0,0.15) !important;
+  }

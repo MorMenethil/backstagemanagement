@@ -3,7 +3,7 @@
     <div class="login_box">
       <!-- 头像区域 -->
       <div class="avatar_box">
-        <img src="../assets/image/AISChaF_20200401165422701.png" alt="" />
+        <img src="../assets/image/timg.jpg" alt="" />
       </div>
       <!-- 登录表单 -->
       <div class="login_row">
