@@ -81,10 +81,8 @@ export default {
 		// 获取菜单权限
 		async getMenus() {
 			const { data: res } = await this.$http.get('menus');
-			console.log(res);
 			if (res.meta.status !== 200) return this.$message.error(res.meta.msg);
 			this.menusList = res.data;
-			console.log(this.menusList);
 		},
 		// 折叠菜单
 		changeMenu() {
