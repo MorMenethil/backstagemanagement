@@ -35,7 +35,8 @@
 							<el-button class="el-icon-edit" size="mini" type="primary" @click="handleEditUser(scope.row.id)"></el-button>
 							<!-- 删除 -->
 							<el-button class="el-icon-delete" size="mini" type="danger" @click="deleteUser(scope.row.id)"></el-button>
-							<el-button class="el-icon-bangzhu" size="mini" type="warning"></el-button>
+							<!-- 分配角色 -->
+							<el-button class="el-icon-bangzhu" size="mini" type="warning" @click="assignRolesDialog(scope.row)"></el-button>
 						</template>
 					</el-table-column>
 				</el-table>
@@ -85,6 +86,25 @@
 					<el-button type="primary" @click="editUser">确 定</el-button>
 				</span>
 			</el-dialog>
+			<!-- 分配角色对话框 -->
+			<el-dialog title="分配角色" :visible.sync="assignRolesDialogVisible" width="50%" @close="resetRolesInfo">
+				<div>
+					<div>当前的用户: {{ userInfo.username }}</div>
+					<div>当前的角色: {{ userInfo.role_name }}</div>
+					<div>
+						属性方式：
+						<template>
+							<el-select v-model="rolesId" placeholder="请选择">
+								<el-option v-for="item in rolesInfo" :key="item.id" :label="item.roleName" :value="item.id"></el-option>
+							</el-select>
+						</template>
+					</div>
+				</div>
+				<span slot="footer" class="dialog-footer">
+					<el-button @click="assignRolesDialogVisible = false">取 消</el-button>
+					<el-button type="primary" @click="assignRoles">确 定</el-button>
+				</span>
+			</el-dialog>
 		</el-card>
 	</div>
 </template>
@@ -124,6 +144,11 @@ export default {
 			timeId: null, // 防抖定时器ID
 			addUserDialog: false, // 添加用户对话框状态
 			editUserDialog: false, // 编辑用户对话框状态
+			assignRolesDialogVisible: false, // 分配角色对话框状态
+			userInfo: {}, // 用户的信息
+			rolesInfo: [], // 分配用户的信息
+			rolesId: '', //待分配角色的id
+			userId: '', // 用户id
 			// 添加用户参数
 			addUserForm: {
 				username: '',
@@ -146,10 +171,8 @@ export default {
 		async getUsersList() {
 			const { data: res } = await this.$http.get('users', { params: this.queryInfo });
 			if (res.meta.status !== 200) return this.$message.error(res.meta.msg);
-			console.log(res);
 			this.usersList = res.data.users;
 			this.total = res.data.total;
-			console.log(this.usersList);
 		},
 		// 改变每页显示条数
 		handleSizeChange(val) {
@@ -189,7 +212,6 @@ export default {
 				}).catch(err => err);
 				if (status !== 'confirm') return this.$message.info('取消添加用户');
 				const { data: res } = await this.$http.post('users', this.addUserForm);
-				console.log(res);
 				if (res.meta.status !== 201) return this.$message.error('添加用户失败');
 				this.$message.success('添加用户成功');
 				this.$refs.addUserRef.resetFields();
@@ -219,7 +241,6 @@ export default {
 		async handleEditUser(id) {
 			this.editUserDialog = true;
 			const { data: res } = await this.$http.get('users/' + id);
-			console.log(res);
 			if (res.meta.status !== 200) return this.$message.error('获取用户数据失败');
 			this.editUserForm = res.data;
 		},
@@ -228,17 +249,38 @@ export default {
 			this.$refs.editUserRef.validate(async valid => {
 				if (!valid) return;
 				const { data: res } = await this.$http.put('users/' + this.editUserForm.id, { email: this.editUserForm.email, mobile: this.editUserForm.mobile });
-				console.log(res)
-				if(res.meta.status !== 200) return this.$message.error('修改用户失败')
-				this.$message.success(res.meta.msg)
+				if (res.meta.status !== 200) return this.$message.error('修改用户失败');
+				this.$message.success(res.meta.msg);
 				this.$refs.editUserRef.resetFields();
-				this.editUserDialog = false
+				this.editUserDialog = false;
 				this.getUsersList();
 			});
 		},
 		// 重置修改用户表单
 		resetEditUserDialog() {
 			this.$refs.editUserRef.resetFields();
+		},
+		// 打开分配角色对话框并获取数据
+		async assignRolesDialog(userInfo) {
+			this.userInfo = userInfo;
+			this.userId = userInfo.id;
+			this.assignRolesDialogVisible = true;
+			const { data: res } = await this.$http.get('roles');
+			if (res.meta.status !== 200) return this.$message.error('获取角色列表失败');
+			this.rolesInfo = res.data;
+		},
+		// 分配角色
+		async assignRoles() {
+			if (!this.rolesId) return this.$message.error('请选择角色');
+			const { data: res } = await this.$http.put(`users/${this.userId}/role`, { rid: this.rolesId });
+			if (res.meta.status !== 200) return this.$message.error('设置角色失败');
+			this.$message.success(res.meta.msg);
+			this.getUsersList();
+			this.assignRolesDialogVisible = false;
+		},
+		// 重置分配角色对话框信息
+		resetRolesInfo() {
+			this.rolesId = ''
 		}
 	},
 	created() {
